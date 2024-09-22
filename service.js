@@ -62,19 +62,18 @@ app.get('/sign-in', (req, res) => {
 
 app.get('/submit-sign-in', (req, res) => {
     const login = req.query.login;
-    const password = req.query.password;  // Если нужно также использовать пароль
+    const password = req.query.password; 
 
     const request = new mssql.Request();
-    //request.input('login', mssql.VarChar, login);  // Привязываем параметр 'login'
+    //request.input('login', mssql.VarChar, login);  
 
-    // Выполняем запрос к базе данных с проверкой логина
     request.query('SELECT * FROM Users', (err, result) => {
         if (err) {
             console.error('Ошибка выполнения запроса:', err);
             res.status(500).send('Произошла ошибка при получении данных');
         } else {
             console.log(result.recordset);
-            res.json(result.recordset);  // Возвращаем результат в формате JSON
+            res.json(result.recordset);  
         }
     });
 });
