@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 const querystring = require('querystring');
+app.set('view engine', 'ejs');
 
 var port = 8080;
 var mssql = require('mssql');
@@ -62,18 +63,29 @@ app.get('/sign-in', (req, res) => {
 
 app.get('/submit-sign-in', (req, res) => {
     const login = req.query.login;
-    const password = req.query.password; 
+    const password = req.query.password;
 
     const request = new mssql.Request();
-    //request.input('login', mssql.VarChar, login);  
+    request.input('login', mssql.VarChar, login);  
+    request.input('password', mssql.VarChar, password);
 
-    request.query('SELECT * FROM Users', (err, result) => {
+    request.query('SELECT * FROM Users WHERE login=@login AND password=@password', (err, result) => {
         if (err) {
             console.error('Ошибка выполнения запроса:', err);
             res.status(500).send('Произошла ошибка при получении данных');
         } else {
-            console.log(result.recordset);
-            res.json(result.recordset);  
+            if (result.recordset.length === 1) {
+                request.query('SELECT * FROM Users', (err, allUsers) => {
+                    if (err) {
+                        console.error('Ошибка получения всех пользователей:', err);
+                        res.status(500).send('Произошла ошибка при получении данных');
+                    } else {
+                        res.render('users', { users: allUsers.recordset });
+                    }
+                });
+            } else {
+                res.sendFile(__dirname + '/html/about-us.html');
+            }
         }
     });
 });
