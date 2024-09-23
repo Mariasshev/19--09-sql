@@ -107,6 +107,52 @@ app.get('/register', (req, res) => {
         })
 })
 
+
+app.get('/submit-register', (req, res) => {
+    const name = req.query.name;
+    const login = req.query.login;
+    const password = req.query.password;
+
+    const request = new mssql.Request();
+    request.input('name', mssql.VarChar, name); 
+    request.input('login', mssql.VarChar, login);  
+    request.input('password', mssql.NVarChar, password);
+
+    request.query('SELECT * FROM Users WHERE name=@name AND login=@login AND password=@password', (err, result) => {
+        if (err) {
+            console.error('Ошибка выполнения запроса:', err);
+            res.status(500).send('Произошла ошибка при получении данных');
+        } else {
+            if (result.recordset.length === 1) {
+                request.query('SELECT * FROM Users', (err, allUsers) => {
+                    if (err) {
+                        console.error('Ошибка получения всех пользователей:', err);
+                        res.status(500).send('Произошла ошибка при получении данных');
+                    } else {
+                        res.send('User already exists!');
+                    }
+                });
+            } else {
+                const query = `
+                INSERT INTO Users (name, login, password) 
+                VALUES (@name, @login, @password)
+                `;
+
+                request.query(query, (err, result) => {
+                    if (err) {
+                        console.error('Ошибка выполнения запроса:', err);
+                        res.status(500).send('Ошибка при добавлении пользователя');
+                    } else {
+                        console.log('Пользователь добавлен');
+                        res.send('Пользователь успешно добавлен');
+                    }
+                });
+            }
+        }
+    });
+});
+
+
 app.listen(port, function() { 
 	console.log('app listening on port ' + port); 
 }); 
